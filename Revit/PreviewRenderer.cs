@@ -12,7 +12,7 @@ namespace MEP_Radial_Routing_ver1.Revit
     {
         public sealed class Stroke
         {
-            public Vec A,B; public byte R,G,Bb;
+            public readonly Vec A,B; public readonly byte R,G,Bb;
             public Stroke(Vec a,Vec b,byte r,byte g,byte blue) { A=a;B=b;R=r;G=g;Bb=blue; }
         }
         readonly Guid id=Guid.NewGuid();
@@ -72,7 +72,7 @@ namespace MEP_Radial_Routing_ver1.Revit
                     DrawContext.FlushBuffer(vb,data.Length*2,ib,data.Length*2,vf,effect,PrimitiveType.LineList,0,data.Length);
                 }
             }
-            catch(Exception ex) { LastError=ex.Message; }
+            catch(Exception ex) {if(LastError!=ex.Message)RoutingLog.Write("DirectContext3D render",ex);LastError=ex.Message;}
         }
         public static XYZ ToXyz(Vec v)=>new XYZ(v.X,v.Y,v.Z);
         public static Vec FromXyz(XYZ v)=>new Vec(v.X,v.Y,v.Z);

@@ -15,7 +15,13 @@
     <Reference Include="WindowsBase"/><Reference Include="PresentationCore"/><Reference Include="PresentationFramework"/>
     <Reference Include="RevitAPI"><HintPath>$(RevitApiPath)\RevitAPI.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="RevitAPIUI"><HintPath>$(RevitApiPath)\RevitAPIUI.dll</HintPath><Private>False</Private></Reference>
-    <Compile Include="Core\*.cs"/><Compile Include="Revit\*.cs"/><Compile Include="UI\*.cs"/>
+    <Compile Include="Core\Geometry.cs"/>
+    <Compile Include="Revit\NativeRoutingHost.cs"/>
+    <Compile Include="Revit\PreviewRenderer.cs"/>
+    <Compile Include="Revit\Routing.cs"/>
+    <Compile Include="Revit\Services.cs"/>
+    <Compile Include="UI\InputController.cs"/>
+    <Compile Include="UI\Views.cs"/>
     <Compile Include="Properties\AssemblyInfo.cs"/>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

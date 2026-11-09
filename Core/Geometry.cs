@@ -1,8 +1,35 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MEP_Radial_Routing_ver1.Core
 {
+    public sealed class CtrlGesture
+    {
+        public readonly double StartX,StartY;
+        public double X {get;private set;}public double Y {get;private set;}
+        public bool Released {get;private set;}
+        public CtrlGesture(double x,double y) {StartX=X=x;StartY=Y=y;}
+        public void Move(double x,double y) {if(!Released) {X=x;Y=y;}}
+        public void Release(double x,double y) {Move(x,y);Released=true;}
+    }
+    public sealed class SystemOption
+    {
+        public readonly int Id;public readonly string Name,Classification;
+        public SystemOption(int id,string name,string classification) {Id=id;Name=name;Classification=classification;}
+    }
+    public static class DefaultSystemSelection
+    {
+        public static SystemOption Choose(IEnumerable<SystemOption> options,int rememberedId=-1,string classification=null)
+        {
+            var all=options.OrderBy(o=>o.Name,StringComparer.OrdinalIgnoreCase).ThenBy(o=>o.Id).ToList();
+            if(classification!=null)return all.FirstOrDefault(o=>o.Classification==classification);
+            return all.FirstOrDefault(o=>o.Id==rememberedId)
+                ??all.FirstOrDefault(o=>o.Classification=="SupplyHydronic")
+                ??all.FirstOrDefault(o=>o.Classification=="DomesticColdWater")
+                ??all.FirstOrDefault();
+        }
+    }
     public struct Vec
     {
         public readonly double X, Y, Z;
@@ -20,6 +47,31 @@ namespace MEP_Radial_Routing_ver1.Core
     public sealed class RoutingFrame
     {
         public readonly Vec U,V,W;
+        RoutingFrame(Vec u,Vec v)
+        {
+            U=u.Unit();V=(v-U*v.Dot(U)).Unit();W=U.Cross(V).Unit();
+        }
+        public static RoutingFrame AroundAxis(Vec outward)
+        {
+            Vec u=outward.Unit(),reference=Math.Abs(u.Dot(Vec.ZAxis))>.99?Vec.XAxis:Vec.ZAxis;
+            return new RoutingFrame(u,reference);
+        }
+        // Roll rotates around the forward axis U. Tilt is deflection away from U.
+        // The set of directions forms a cone, independent of camera/model planes.
+        public Vec SpatialDirection(double rollDegrees,double tiltDegrees)
+        {
+            if(double.IsNaN(rollDegrees) || double.IsInfinity(rollDegrees) || double.IsNaN(tiltDegrees) || double.IsInfinity(tiltDegrees) || tiltDegrees<0 || tiltDegrees>90)throw new ArgumentException("Invalid roll/tilt");
+            double roll=(rollDegrees%360)*Math.PI/180,tilt=tiltDegrees*Math.PI/180;
+            return (U*Math.Cos(tilt)+(V*Math.Cos(roll)+W*Math.Sin(roll))*Math.Sin(tilt)).Unit();
+        }
+        public RoutingFrame TransportTo(Vec outward)
+        {
+            Vec u=outward.Unit(),cross=U.Cross(u);double sine=cross.Length,cosine=U.Dot(u);
+            if(sine<1e-10)return new RoutingFrame(u,V);
+            Vec axis=cross*(1/sine);
+            Vec transported=V*cosine+axis.Cross(V)*sine+axis*(axis.Dot(V)*(1-cosine));
+            return new RoutingFrame(u,transported);
+        }
         public RoutingFrame(Vec outward, bool project)
         {
             U=project ? Vec.XAxis : outward.Unit();
@@ -33,6 +85,30 @@ namespace MEP_Radial_Routing_ver1.Core
             Vec a=plane==2?V:U, b=plane==0?V:W;
             double r=degrees*Math.PI/180; return (a*Math.Cos(r)+b*Math.Sin(r)).Unit();
         }
+        public int BestPlane(Vec right,Vec up)
+        {
+            int best=0;double area=-1;
+            for(int plane=0;plane<3;plane++)
+            {
+                var a=plane==2?V:U;var b=plane==0?V:W;
+                double candidate=Math.Abs(a.Dot(right)*b.Dot(up)-a.Dot(up)*b.Dot(right));
+                if(candidate>area+1e-9) {area=candidate;best=plane;}
+            }
+            return best;
+        }
+        public Vec ScreenDirection(int plane,int sector,Vec right,Vec up,out double modelDegrees)
+        {
+            double screenAngle=sector*Math.PI/4,tx=Math.Cos(screenAngle),ty=Math.Sin(screenAngle);
+            double best=-2;modelDegrees=0;Vec result=Direction(plane,0);
+            for(int i=0;i<8;i++)
+            {
+                Vec candidate=Direction(plane,i*45);double x=candidate.Dot(right),y=candidate.Dot(up),length=Math.Sqrt(x*x+y*y);
+                if(length<.08)continue;
+                double score=(x*tx+y*ty)/length;
+                if(score>best+1e-9) {best=score;modelDegrees=i*45;result=candidate;}
+            }
+            return result;
+        }
     }
     public static class RadialHitTest
     {
@@ -40,7 +116,9 @@ namespace MEP_Radial_Routing_ver1.Core
         public static double Delta(double a,double b) => Math.Abs((Normalize(a-b)+180)%360-180);
         public static int Hit(double x,double y,int previous)
         {
-            if(x*x+y*y<38*38 || x*x+y*y>150*150) return -1;
+            // A marking gesture may extend beyond the visible wheel. Only its
+            // center cancels; releasing farther out must still lock the direction.
+            if(double.IsNaN(x) || double.IsNaN(y) || double.IsInfinity(x) || double.IsInfinity(y) || x*x+y*y<38*38) return -1;
             double angle=Normalize(Math.Atan2(-y,x)*180/Math.PI);
             if(previous>=0 && Delta(angle,previous*45)<=26) return previous;
             return ((int)Math.Floor((angle+22.5)/45))%8;
@@ -51,6 +129,15 @@ namespace MEP_Radial_Routing_ver1.Core
         public Vec Center,Right,Up;
         public double Left,Top,Width,Height,ModelWidth,ModelHeight;
         public bool Contains(double x,double y) => x>=Left && y>=Top && x<Left+Width && y<Top+Height;
+        public bool TryProject(Vec point,out double x,out double y)
+        {
+            x=y=0;
+            if(Width<=0 || Height<=0 || ModelWidth<=0 || ModelHeight<=0 || !point.Finite)return false;
+            Vec offset=point-Center;
+            x=Left+Width/2+offset.Dot(Right)*Width/ModelWidth;
+            y=Top+Height/2-offset.Dot(Up)*Height/ModelHeight;
+            return true;
+        }
         public bool TryLength(Vec origin,Vec direction,double x,double y,out double length)
         {
             length=0;
@@ -64,6 +151,41 @@ namespace MEP_Radial_Routing_ver1.Core
             double oy=Top+Height/2-offset.Dot(Up)*Height/ModelHeight;
             length=((x-ox)*dx+(y-oy)*dy)/den;
             return !double.IsNaN(length) && !double.IsInfinity(length);
+        }
+    }
+    public enum ConnectionKind { Straight,Elbow,Reverse }
+    public static class ConnectionGeometry
+    {
+        public static ConnectionKind Classify(Vec outward,Vec outgoing)
+        {
+            double dot=outward.Unit().Dot(outgoing.Unit());
+            return dot>1-1e-8?ConnectionKind.Straight:dot<-1+1e-8?ConnectionKind.Reverse:ConnectionKind.Elbow;
+        }
+    }
+    public static class ConnectionGraph
+    {
+        // A turn is valid only along a physical path containing an actual elbow.
+        // The target is terminal; unrelated fittings beyond it cannot validate a turn.
+        public static IReadOnlyList<int> FindPath(int source,int target,Func<int,IEnumerable<int>> neighbours,Func<int,bool> fitting,Func<int,bool> elbow,bool requireElbow)
+        {
+            var pending=new Queue<List<int>>();pending.Enqueue(new List<int>{source});
+            while(pending.Count>0)
+            {
+                var path=pending.Dequeue();if(path.Count>32)continue;
+                foreach(int next in neighbours(path[path.Count-1]))
+                {
+                    if(path.Contains(next))continue;
+                    var extended=new List<int>(path){next};
+                    if(next==target)
+                    {
+                        bool hasElbow=false;for(int i=1;i<path.Count;i++)if(elbow(path[i])) {hasElbow=true;break;}
+                        if(!requireElbow || hasElbow)return extended;
+                        continue;
+                    }
+                    if(fitting(next))pending.Enqueue(extended);
+                }
+            }
+            return null;
         }
     }
     public enum RoutingState { Idle,SelectingConnector,ChoosingDirection,SettingLength,Committing,Completed,Cancelled }

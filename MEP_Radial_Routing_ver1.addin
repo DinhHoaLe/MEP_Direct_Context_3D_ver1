@@ -6,6 +6,6 @@
     <AddInId>78E3CE0B-85A6-46F4-B82E-C6620A1EB93E</AddInId>
     <FullClassName>MEP_Radial_Routing_ver1.Revit.RoutingApplication</FullClassName>
     <VendorId>HLME</VendorId>
-    <VendorDescription>MEP radial pipe placeholder routing</VendorDescription>
+    <VendorDescription>Pipe routing with connector-axis 3D roll and tilt</VendorDescription>
   </AddIn>
 </RevitAddIns>

@@ -1,99 +1,90 @@
-# MEP_Radial_Routing_ver1
+# MEP Radial Pipe Routing 1.4 — Axis 3D
 
-Add-in C# / WPF cho **Revit 2023, .NET Framework 4.8, x64**. Đi tuyến Pipe bằng radial menu, preview DirectContext3D, xuất Pipe Placeholder. Giữ tên file project cũ để không phá solution hiện có; assembly mới là `MEP_Radial_Routing_ver1.dll`. `Class1.cs` ban đầu vẫn giữ nhưng không nằm trong build.
-
-## Build và cài đặt
-
-Cần Visual Studio có .NET desktop development + .NET Framework 4.8 targeting pack và Revit 2023. Không cần NuGet.
-
-```powershell
-& 'C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe' .\MEP_Direct_Context_3D_ver1.csproj /t:Build /p:Configuration=Release /p:UseSharedCompilation=false
-# Nếu API nằm chỗ khác, thêm: '/p:RevitApiPath=D:\Autodesk\Revit 2023'
-.\scripts\test.ps1
-.\scripts\install.ps1 -Configuration Release
-```
-
-`install.ps1` ghi manifest vào `%APPDATA%\Autodesk\Revit\Addins\2023`, trỏ tới DLL trong thư mục build hiện tại. Chạy script trên máy cần cài, sau khi build. Đóng/mở lại Revit; chọn **Add-Ins → MEP Radial Routing → Pipe Radial Routing**. Khi di chuyển source/build sang chỗ khác, chạy lại script. Muốn gỡ, xóa riêng `MEP_Radial_Routing_ver1.addin` ở thư mục Addins/2023 khi Revit đã đóng. Không chép RevitAPI.dll/RevitAPIUI.dll cùng add-in.
-
-Manifest ở thư mục gốc là template; không cài trực tiếp khi còn `__ASSEMBLY_PATH__`. Bản manifest cụ thể dùng DLL Release hiện tại được đặt trong `bin/Release`.
+Add-in C# / WPF cho Revit 2023, .NET Framework 4.8, x64. Không có bảng setup hoặc cửa sổ Pipe Routing. Chỉ hiện menu tròn khi giữ Ctrl; click/Enter tạo Pipe thật ngay qua ExternalEvent. Tên System Type hiện ngay trên radial menu; tuyến mới có thể đổi hệ bằng Ctrl+Tab.
 
 ## Cách dùng
 
-1. Mở project trong view 3D **orthographic**, chưa hỗ trợ perspective/family document.
-2. Chọn Select source element rồi chọn Pipe hoặc FamilyInstance có connector End, round, DomainPiping chưa kết nối. Danh sách hiển thị ID, tọa độ mm và đường kính. Dấu đỏ là connector chọn; dấu xám là các connector còn lại. Đổi connector trong danh sách để xem highlight.
-3. Kiểm tra System Type, Pipe Type, Level, Diameter mm và Reference Frame. Pipe nguồn cung cấp mặc định type/system/level nếu có; thiết bị dùng các lựa chọn khả dụng và level gần nhất khi không có level. Diameter lấy theo connector đang chọn. Kiểm tra lại system khi dùng thiết bị.
-4. Start Routing. Bảng thiết lập được khóa trong phiên để frame và thông số không đổi giữa tuyến.
-5. Đặt chuột trong viewport, giữ Ctrl để mở bánh xe tại con trỏ. Tâm cố định trong lần mở. Rê chọn góc; wheel đổi XY/XZ/YZ hoặc UV/UW/VW. Thả Ctrl trên vùng để khóa hướng; thả ở tâm/ngoài vòng hoặc Esc để giữ hướng, mặt phẳng và preview trước đó.
-6. Di chuyển chuột để xác định chiều dài trên hướng model đã khóa. Chiều dài/lỗi hiển thị trong bảng thiết lập. Hoặc nhập Exact length (mm), bấm Apply length; chế độ nhập chính xác giữ nguyên chiều dài khi di chuyển chuột tới lúc khóa hướng mới. Đoạn không hợp lệ màu đỏ.
-7. Click trái trong viewport hoặc Enter để chốt. Endpoint trở thành origin mới. Ctrl tiếp tục chọn hướng. Backspace xóa đoạn chốt cuối; Esc bỏ đoạn đang preview. Cancel bỏ toàn bộ phiên.
-8. Custom angle nhận số độ theo mặt phẳng đang hoạt động; bấm Lock custom angle để khóa. Chọn lại mặt phẳng qua radial menu nếu cần. Preset radial cố định 8 góc mỗi 45°; không có trình sửa danh sách preset trong v1.
-9. Finish chỉ xuất các đoạn đã chốt. Nếu còn đoạn preview, chốt hoặc Esc trước. Khi Revit từ chối tạo/liên kết placeholder, transaction rollback và tuyến vẫn được giữ để Undo/chỉnh lại. Thành công sẽ chọn placeholder vừa tạo và dọn toàn bộ preview.
+1. **Way 1 — Pipe gốc:** gọi PI/Pipe và vẽ bình thường bằng Revit. Không nhấn Ctrl thì add-in không hủy lệnh, không tạo router, không sửa thông số Properties và không can thiệp click/Enter/Esc/wheel.
+2. **Way 2 — Ctrl/radial:** trong 3D orthographic, giữ Ctrl khi đang dùng Pipe để chuyển sang radial. Đầu hở của đoạn native vừa vẽ được dùng làm nguồn, giữ type/system/diameter thực tế. Hoặc ngoài lệnh Pipe: chọn Pipe/thiết bị rồi giữ Ctrl gần connector mở (32 pixel) để vào radial trực tiếp.
+3. Giữ Ctrl: chọn **R** trên vòng tròn để xoay quanh trục nguồn. Wheel chọn **T** (góc nghiêng khỏi trục): 0 / 15 / 22.5 / 30 / 45 / 60 / 90°. Mặc định T=45°. Có thể rê ra ngoài vòng tròn; thả Ctrl để khóa vector 3D. Vùng tâm/Esc hủy lượt chọn và khôi phục góc nghiêng trước.
+4. Di chuyển chuột để kéo chiều dài. Click hoặc Enter tạo ngay đoạn Pipe và kết nối với nguồn, gồm fitting nếu Revit cần và có cấu hình phù hợp. Không cần thao tác Finish ẩn để ghi model.
+5. Sau khi thành công, đầu hở của Pipe mới trở thành nguồn tiếp theo. Tiếp tục Ctrl/chọn hướng/kéo/click.
+6. Enter giữa các đoạn hoặc Esc khi không còn preview kết thúc phiên. Esc/Backspace khi đang preview chỉ bỏ preview. Các Pipe đã tạo vẫn ở model. Kết thúc phiên rồi dùng Undo gốc của Revit để hoàn tác đoạn đã tạo.
 
-**Placeholder bắt đầu tại tọa độ connector nguồn nhưng chưa kết nối vào nguồn. Chưa chuyển thành Pipe thật và chưa xác minh fitting theo routing preferences.** Liên kết placeholder tại góc dùng `PlumbingUtils.ConnectPipePlaceholdersAtElbow`; các đoạn thẳng liên tiếp dùng connector `ConnectTo`. Lỗi liên kết làm rollback toàn bộ; không tự bỏ qua lỗi để giữ các đoạn rời.
+Chỉ có radial overlay không lấy focus. Không có SetForegroundWindow, SendInput hoặc SetCursorPos. Không điều khiển chuột/bàn phím từ xa. Hook chỉ hoạt động khi Revit foreground và đúng view nguồn; input bị bỏ khi mất focus/đổi view. Bộ theo dõi connector ngoài phiên không chặn Enter/Esc/Backspace.
 
-## Quy ước hình học
+## Vector 3D theo trục nguồn
 
-- Project dùng trục tọa độ nội bộ model X/Y/Z; không xoay theo Project North / True North hoặc shared coordinates. Đây là nghĩa của Project trong bản này.
-- Connector: U = BasisZ hướng ra connector; V = Z × U, trừ khi gần song song Z thì dùng Y × U; W = U × V. Frame giữ nguyên suốt phiên, chỉ di chuyển origin.
-- UV/XY: 0° theo U/X, +90° theo V/Y. UW/XZ: 0° theo U/X, +90° theo W/Z. VW/YZ: 0° theo V/Y, +90° theo W/Z.
-- Hướng = cos(a) A + sin(a) B. Bánh xe nằm trên màn hình; hướng trên bánh xe **không phải** hướng chiếu của model.
-- Screen projection dùng `UIView.GetWindowRectangle`, `GetZoomCorners`, `View.RightDirection/UpDirection`; chiếu ray hướng đã khóa lên hai trục màn hình và giải bình phương tối thiểu để tìm L. Không dùng PickPoint cho mouse-move.
-- Hướng có độ dài chiếu nhỏ hơn 0.08 (~4.6° từ hướng nhìn) không kéo chiều dài; nhập số hoặc đổi camera/hướng. L âm không được chốt. Giới hạn tối thiểu max(ShortCurveTolerance, 0.1 inch) + tolerance.
-- Đoạn trùng/chồng ngược với bất kỳ đoạn nào đã chốt bị từ chối. Không kiểm tra va chạm vật cản, tự giao không đồng tuyến, hoặc khả năng đặt fitting.
+Không còn chọn XY/XZ/YZ hoặc tự chọn mặt phẳng theo camera trong luồng routing.
 
-## Kiến trúc và vòng đời
+- U là hướng tiến: Pipe lấy tiếp tuyến đường tâm tại connector được chọn, đảo dấu tại đầu đầu tiên để luôn hướng ra ngoài ống. Thiết bị/fitting dùng BasisZ của connector.
+- V là hướng tham chiếu cho R=0°, ban đầu lấy hướng Z chiếu vuông góc U. Nếu U gần đứng, lấy X làm tham chiếu để tránh vector suy biến. W=U×V.
+- Vector = cos(T) U + sin(T) [cos(R) V + sin(R) W]. R xoay quanh U, T nghiêng khỏi U; đây là tập hướng trên một mặt nón 3D, không phải một mặt phẳng qua origin.
+- T=0°: đi thẳng theo U, không phụ thuộc R. T=90°: rẽ vuông góc U. Với các góc khác, hướng vừa tiến vừa nghiêng theo R.
+- Sau mỗi đoạn tạo thành công, U cập nhật theo hướng đầu hở của Pipe mới. V/W được vận chuyển bằng phép quay tối thiểu từ trục cũ sang trục mới để giữ tham chiếu xoay liên tục khi đi qua ống đứng/xiên; không reset theo camera hoặc world axes.
+- Preview hiển thị trục U/V/W, mặt nón lựa chọn và mũi tên vector thật. Menu hiển thị AXIS 3D, R và T. Camera chỉ ảnh hưởng phép đo chiều dài từ màn hình, không thay vector đã khóa.
 
-- `Core/Geometry.cs`: Vec, RoutingFrame, Projection, RadialHitTest (dead zone 38 DIP, hysteresis 3.5°), RouteSession/RouteSegment và state transitions. Không tham chiếu Revit/WPF.
-- `Revit/Routing.cs`: command, ribbon application, controller, ExternalEvent request handler, Idling snapshot/refresh. API document chỉ chạy trong command, ExternalEvent, Idling hoặc lifecycle callbacks hợp lệ.
-- `Revit/Services.cs`: lọc/chọn connector, snapshot identity, revalidate nguồn, tạo placeholder trong transaction và failure preprocessor rollback.
-- `Revit/PreviewRenderer.cs`: DirectContext3D server, snapshot stroke bất biến; buffer được tạo/dispose trong RenderScene, chia batch theo giới hạn chỉ số. Wireframe đường kính đơn giản, centerline, mũi tên, trục và khung mặt phẳng tạm. Không tạo ModelLine/ReferencePlane.
-- `UI/Views.cs`: WPF settings và radial overlay không lấy focus. Tính vị trí bằng screen coordinates và effective DPI transform của WPF.
-- `UI/InputController.cs`: hook keyboard/mouse Win32 chỉ cài khi Start Routing. Callback không gọi Revit document API; chỉ đổi dữ liệu trong bộ nhớ. Bỏ qua input khi Revit main window không có foreground, ngoài viewport (trừ lúc menu mở), hoặc không ở phiên routing. Wheel chỉ chặn khi Ctrl/menu đang mở.
-- Idling chụp viewport/camera; chỉ RefreshActiveView khi dữ liệu preview thay đổi. Không vòng redraw liên tục. Renderer không đọc UI/session đang bị sửa từ render thread.
-- Finish/Cancel/đóng document/thoát Revit đều unhook, dừng timer, đóng overlay, bỏ subscription và unregister graphics server. Mất focus đóng menu và giữ trạng thái trước; quay lại Revit để tiếp tục. Đổi sang view/document khác tạm ngưng input tới khi trở lại view gốc.
+Nếu bắt đầu ở điểm tự do chưa có Pipe/connector, chưa tồn tại trục nguồn; dùng RightDirection của view tại thời điểm bắt đầu làm trục ban đầu. Sau đoạn đầu, dùng trục Pipe thật. Hướng gần view-normal vẫn không kéo được chiều dài từ chuột; xoay view hoặc đổi R/T. Chưa có nhập số góc tùy ý/chiều dài ở bản không panel.
 
-## Kiểm chứng đã thực hiện
+## Điểm khởi chạy và thông số
 
-Ngày 09/11/2026:
+BeforeExecuted chỉ ghi nhận PI bắt đầu, **không đặt Cancel và không tạo phiên radial**. DocumentChanged chỉ đọc các Pipe mới/được sửa để chụp đầu hở và thông số thực tế. Chỉ Ctrl mới yêu cầu kết thúc tool native và chuyển sang ExternalEvent/radial. Lượt Pipe native được kết thúc bằng hai cặp thông điệp Escape gửi riêng tới HWND Revit đang foreground; không gửi phím toàn hệ thống, không chuyển focus hoặc di chuyển chuột. Handoff bị bỏ khi mất focus/đổi view/document; chờ quá 3 giây thì bỏ yêu cầu, không thử gửi thêm phím.
 
-- Debug build thành công với DLL thực tế trong `C:\Program Files\Autodesk\Revit 2023`.
-- Release rebuild thành công, không warning/error; DLL trong `bin/Release`.
-- Test console độc lập Revit: **168 assertions PASS** gồm connector frame ngang/đứng/nghiêng, 8 góc cả 3 mặt phẳng, hướng +90°, radial dead zone/hysteresis, projection có offset màn hình âm, hướng gần camera, minimum length, overlap, Undo/Esc, commit/rollback/complete/cancel.
-- Chữ ký `Pipe.CreatePlaceholder`, `ConnectPipePlaceholdersAtElbow`, `DrawContext.FlushBuffer` được đối chiếu XML API Revit 2023 cài trên máy. DirectContext3D buffer/server interfaces được compiler kiểm tra với DLL 2023.
+Radial là chế độ riêng sau khi chuyển, không khóa trực tiếp đầu ống preview của native command. Bản hiện tại chỉ nhận chắc chắn điểm từ connector hoặc Pipe đã ghi model; nếu Ctrl trước khi tạo đoạn native đầu tiên và chưa có connector nguồn, cần chọn điểm đầu lại sau khi chuyển. Không lấy tọa độ giả từ màn hình. Sau radial, Enter/Esc kết thúc phiên; gọi PI lại để trở về Pipe gốc.
 
-**Chưa chạy kiểm thử tương tác trong Revit.** Build không chứng minh hook, hiển thị GPU, DPI hoặc transaction tạo placeholder chạy đúng với từng model. Chưa cài manifest vào hồ sơ Revit trên máy; chỉ tạo source, build và hướng dẫn cài.
+Plan/section/perspective giữ Pipe native và không có radial routing. Grip connector còn phụ thuộc command Revit thực sự gọi; chọn phần tử rồi Ctrl gần connector là đường khởi chạy trực tiếp.
 
-## Checklist kiểm thử thủ công trong Revit 2023
+- Pipe nguồn: kế thừa type/system/level và đường kính connector.
+- Thiết bị: Pipe Type mặc định của document, system khớp classification, level thiết bị hoặc level gần connector nhất. Không suy ra được system thì báo lỗi.
+- Điểm mới không có nguồn: ưu tiên thông số của lần tạo thành công trước trong document (kiểm tra ID còn tồn tại), rồi Pipe gần nhất. Nếu chưa có Pipe, dùng Pipe Type mặc định/100 mm, chọn Hydronic Supply nếu có, tiếp theo Domestic Cold Water rồi hệ đầu tiên theo tên. Nhiều System Type không còn là lỗi. Tên system hiện dưới menu Ctrl; Tab khi giữ Ctrl đổi hệ trước đoạn đầu tiên. Không hiện bảng setup. Native Properties không tự điều khiển router sau handoff.
+- Chọn điểm đầu dùng work plane hiện tại và snap endpoint/intersection. Nếu chưa có work plane, tạo tạm mặt phẳng song song màn hình qua View.Origin, rollback sau khi chọn/Esc. Điểm cách connector mở dưới 1 mm được nhận làm nguồn.
 
-Dùng bản sao model MEP có System Type, Pipe Type, Level và thiết bị/pipe với connector mở.
+## Tạo ống và fitting
 
-| Ca kiểm tra | Thao tác / kết quả mong đợi |
-|---|---|
-| Điều kiện view | Perspective/plan/family: command từ chối; orthographic 3D: mở bảng |
-| Nguồn ngang/đứng/nghiêng | Chọn từng nguồn, kiểm tra marker đúng vị trí và đường kính; connector đã kết nối/khác domain/non-round không chọn được |
-| Nhiều connector | Đổi từng dòng danh sách; marker đỏ và diameter đổi theo connector |
-| Frame/góc | Project và Connector; thử 0/45/90/180/270 trên cả ba mặt phẳng; đối chiếu trục màu và quy ước trên |
-| Ctrl / tâm / Esc | Giữ Ctrl mở, hover cập nhật mũi tên; tâm cố định; thả tâm/ngoài vòng/Esc khôi phục plane và preview cũ; sát ranh giới không nhấp nháy |
-| Wheel / focus | Wheel mở menu đổi plane; wheel thường zoom Revit. Alt-Tab lúc giữ Ctrl: menu đóng; ứng dụng khác không bị bắt phím/wheel |
-| Chiều dài kéo | So sánh chiều dài hiển thị với khoảng cách model; quay camera không đổi vector model đã khóa |
-| Hướng camera | Khóa hướng gần view-normal, thử kéo: không tạo điểm tùy tiện; nhập 1000 mm vẫn tạo đúng đoạn |
-| Nhập số | Custom 22.5°, length 1000 mm, Apply; di chuột không đổi exact length; số âm/NaN/độ dài quá ngắn bị từ chối |
-| Liên tục/Undo/Esc | Chốt 3 đoạn, Backspace trả origin về endpoint đoạn 2; Esc chỉ bỏ preview; đoạn đã chốt vẫn hiển thị |
-| Hình học lỗi | Quay ngược chồng đoạn trước hoặc quay lại trùng đoạn cũ: đỏ + báo lỗi, không chốt |
-| Finish thành công | Finish 2–3 đoạn hợp lệ: placeholder đúng type/system/level/diameter, liên kết nhau, được chọn; nguồn chưa được kết nối |
-| Finish lỗi | Trong bản sao model, đổi/xóa nguồn hoặc làm kết nối nguồn trong khi phiên đang mở: Finish báo lỗi, không có phần tử dở dang, tuyến được giữ; thử thêm tuyến có góc Revit không chấp nhận |
-| Cleanup | Cancel, Finish, đóng document trong phiên, thoát Revit; không còn preview/overlay, Ctrl và wheel trở lại bình thường; chạy lại command |
-| DPI/nhiều màn hình | 100/125/150/200%, màn hình bên trái có tọa độ âm, kéo cửa sổ Revit sang monitor khác: tâm đúng chuột, vùng hover đúng sector; lặp thao tác zoom/pan |
-| View/document | Chuyển view hoặc document: routing input tạm ngưng; về view gốc tiếp tục; đóng document nguồn dọn phiên |
+Mỗi click hợp lệ tạo một transaction riêng. Đoạn thẳng từ connector dùng `Pipe.Create(Document, pipeTypeId, levelId, startConnector, endPoint)`. Khi đổi hướng, tạo Pipe hai điểm, đặt đường kính rồi gọi `NewElbowFitting` để tạo co thật. Kiểm tra `MechanicalFitting.PartType == Elbow` và hai connector của co nối tới đúng hai đầu ống. Đi ngược vào nguồn bị từ chối. Không coi kết nối trực tiếp ở góc là đã có fitting.
 
-## Giới hạn cần lưu ý
+Sau khi tạo, kiểm tra đường kết nối vật lý tới phần tử nguồn; ở chỗ đổi hướng, đường này bắt buộc đi qua Elbow thật, không chấp nhận union hoặc co ở nhánh không liên quan; kiểm tra có đầu hở đúng endpoint để tiếp tục. Bất kỳ lỗi tạo/nối/commit đều rollback toàn bộ đoạn vừa thử, kể cả phần Pipe có thể đã được API tạo trước khi ném lỗi. Những đoạn đã tạo thành công trước đó được giữ. Preview lỗi vẫn còn để đổi hướng hoặc Esc.
 
-Đây là bản triển khai v1 cần qua checklist Revit trước khi dùng sản xuất. Wireframe preview chưa phải shaded solid và chưa có HUD chiều dài tại con trỏ; chiều dài nằm trong bảng thiết lập. Preset wheel cố định 45°, custom angle nhập ở bảng. Không hỗ trợ linked model connector, perspective, duct/tray/conduit, persistence/resume sau khi đóng phiên, obstacle avoidance, hoặc conversion thành Pipe thật. System của connector thiết bị cần người dùng kiểm tra thủ công. Không thực hiện kiểm tra fitting feasibility.
+Nguồn được kiểm tra lại về identity, vị trí, hướng, đường kính và trạng thái mở trước mỗi lần tạo. Lỗi hiển thị Pipe Type, diameter, số elbow rules và thông báo Revit. Không tự sửa routing preferences của model hoặc tự giữ ống rời khi không nối được.
 
-Hook phụ thuộc Win32/WPF trong tiến trình Revit; DPI hỗn hợp phụ thuộc DPI awareness của host và cần kiểm chứng thực tế. Menu sát mép màn hình có thể bị cắt vì giữ tâm tại chuột. Khi phiên routing đang hoạt động, Ctrl/Enter/Esc/Backspace và click chốt trong viewport dành cho công cụ này; Finish/Cancel trước khi chuyển sang một lệnh Revit khác. Thay đổi document từ add-in khác chỉ được kiểm tra lại nguồn ở Finish. Mã hiện tại tách core để mở rộng loại MEP sau này, chưa cung cấp backend cho các loại khác.
+**Không thể bảo đảm fitting nếu model không có family/routing rule hỗ trợ đúng kích thước và góc.** Không tự tải family hoặc thay Pipe Type. Kiểm tra chiều dài tối thiểu và chồng đồng tuyến với các đoạn đã tạo trong phiên; chưa kiểm tra vật cản hoặc nối tự động tới connector đích.
 
-## Tài liệu API
+## Chẩn đoán
 
-- XML đi kèm Revit 2023: `RevitAPI.xml`, `RevitAPIUI.xml` là nguồn đối chiếu theo đúng phiên bản build.
-- [Autodesk — Displaying Graphics with DirectContext3D](https://help.autodesk.com/cloudhelp/2026/ENU/Revit-API/files/Revit_API_Developers_Guide/Basic_Interaction_with_Revit_Elements/Views/Revit_API_Revit_API_Developers_Guide_Basic_Interaction_with_Revit_Elements_Views_Displaying_Graphics_with_DirectContext3D_html.html) (tham khảo kiến trúc; không dùng để suy đoán chữ ký 2023).
-- [Autodesk — Placeholders](https://help.autodesk.com/cloudhelp/2024/PTB/Revit-API/files/Revit_API_Developers_Guide/Discipline_Specific_Functionality/MEP_Engineering/MEP_Element_Creation/Revit_API_Revit_API_Developers_Guide_Discipline_Specific_Functionality_MEP_Engineering_MEP_Element_Creation_Placeholders_html.html).
+Log chính: `%LOCALAPPDATA%\MEP_Radial_Routing\routing.log`. Ghi version/DLL đã nạp, handoff Pipe, nguồn/thông số, hướng khóa, tạo thành công và lỗi. Log lỗi tương thích cũ: `%TEMP%\MEP_Radial_Routing.log`.
+
+## Cấu trúc
+
+- `Core/Geometry.cs`: vector, frame quanh trục nguồn, roll/tilt mặt nón, transport frame qua các đoạn, projection, hit test, RouteSession. Các helper mặt phẳng cũ chỉ còn phục vụ kiểm tra hồi quy, không dùng để khóa hướng routing.
+- `Revit/NativeRoutingHost.cs`: quan sát PI không hủy, DocumentChanged snapshot nguồn native, Ctrl handoff có giới hạn thời gian, theo dõi connector lúc Idling và log.
+- `Revit/Routing.cs`: chọn điểm, preview, tạo từng đoạn ngay khi click, chuyển nguồn sang Pipe mới, kết thúc phiên.
+- `Revit/Services.cs`: snapshot connector, nhận thông số, tạo/nối Pipe bằng connector overload, kiểm tra liên kết và rollback.
+- `Revit/PreviewRenderer.cs`: DirectContext3D, stroke snapshot bất biến, chia batch, wireframe/marker/trục.
+- `UI/Views.cs`: chỉ có radial overlay. Không còn SettingsWindow.
+- `UI/InputController.cs`: hook primitive input, dispatch sau hook, gộp mouse-move, giữ cặp click, chặn input lặp trong lúc chờ ghi model.
+
+## Build / test / cài
+
+Cần Visual Studio + .NET Framework 4.8 targeting pack + Revit 2023; không cần NuGet. Tên project cũ được giữ, output `MEP_Radial_Routing_ver1.dll`. Class1.cs không nằm trong build.
+
+```powershell
+& 'C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe' .\MEP_Direct_Context_3D_ver1.csproj /t:Build /p:Configuration=Release /p:OutputPath=bin\Axis3D\ /p:UseSharedCompilation=false
+.\scripts\test.ps1
+.\scripts\install.ps1 -AssemblyPath .\bin\Axis3D\MEP_Radial_Routing_ver1.dll
+```
+
+Nếu API ở nơi khác, thêm `/p:RevitApiPath=...`. Manifest cài trong `%APPDATA%\Autodesk\Revit\Addins\2023`; khởi động lại Revit để nạp DLL mới. Không đóng Revit tự động. Không chép RevitAPI.dll/RevitAPIUI.dll cùng add-in. Manifest gốc có `__ASSEMBLY_PATH__` là template.
+
+## Kiểm chứng
+
+09/11/2026: 799 assertions hình học/projection/menu/state và 20 assertions input. Có kiểm tra các trục ngang/đứng/đứng ngược/xiên/gần đứng; mọi preset R/T có vector đơn vị và góc với trục nguồn đúng T; ba hướng trên mặt nón không đồng phẳng; T=0 đi thẳng; chuyển frame qua ống đứng giữ đúng tham chiếu xoay. Giữ các kiểm tra hồi quy hit test, projection, graph fitting và trạng thái tuyến. Input tests không cài hook thật hoặc điều khiển thiết bị. Build với DLL API Revit 2023 thực tế.
+
+**Chưa chạy được kiểm thử tương tác/transaction fitting trên model thực tế vì công cụ không kết nối được Revit client.** Unit test/build không chứng minh fitting trên model có thể tạo. Log 1.2 xác nhận các lần tạo được báo thành công chỉ có một phần tử Pipe; code cũ chấp nhận kết nối trực tiếp ở góc. Bản 1.2.1 thêm ca regression cho lỗi này và yêu cầu Elbow thật. Góc đã tạo trong model bằng bản cũ không tự được sửa khi nạp DLL mới.
+
+Checklist model bản sao: chọn đúng từng connector; Pipe gốc khởi chạy được; vector theo trục nguồn trong mọi góc nhìn; rê xa vẫn khóa hướng; click tạo ngay Pipe/fitting; đầu hở tiếp tục được; thiếu fitting phải rollback đoạn vừa thử; Esc giữ các đoạn đã tạo; Alt-Tab/đổi view/đóng document dọn hoặc tạm ngưng input; nhiều màn hình/DPI không làm lệch hit test; sau restart log ghi version 1.4.0.0 và đúng DLL Axis3D.
+
+Bản 1.2.2 sửa lỗi tuyến mới trong template có nhiều System Type. Connector nguồn vẫn chỉ nhận hệ cùng classification; không tự gán Hydronic Supply cho connector có classification khác. System mặc định được hiển thị và có thể đổi trong menu Ctrl, không yêu cầu chọn nguồn trước.
+
+Checklist hai way: PI không Ctrl phải giữ trọn luồng Revit; sau một đoạn native, Ctrl chuyển từ đúng đầu hở; Ctrl nhanh vẫn giữ tâm/menu và điểm thả; Ctrl không có nguồn cần chọn điểm đầu; ngoài lệnh Pipe, chọn connector + Ctrl phải khởi chạy được; Esc/Alt-Tab/đổi view không để lại handoff chờ vô hạn; đổi hướng radial phải có Elbow thật. Chưa kiểm thử handoff bằng thông điệp cửa sổ trong Revit vì kết nối Revit client chưa hoạt động.
+
+Checklist Axis 3D: lấy cả hai đầu cùng Pipe, U phải ngược nhau và hướng ra ngoài; ống xiên không kéo về trục model; wheel đổi T chứ không đổi plane; R=0/T=0 đi thẳng; T=90 tạo góc vuông; tạo liên tiếp hai đoạn xiên rồi kiểm tra U theo đoạn mới; xoay camera sau khóa không đổi vector; Cancel menu khôi phục T; PI không Ctrl vẫn native; mỗi chỗ đổi hướng phải có Elbow thật. Chưa kiểm thử tương tác 1.4 trong Revit.
