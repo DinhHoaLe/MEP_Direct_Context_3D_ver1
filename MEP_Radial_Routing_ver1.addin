@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>MEP_Radial_Routing_ver1</Name>
+    <Assembly>__ASSEMBLY_PATH__</Assembly>
+    <AddInId>78E3CE0B-85A6-46F4-B82E-C6620A1EB93E</AddInId>
+    <FullClassName>MEP_Radial_Routing_ver1.Revit.RoutingApplication</FullClassName>
+    <VendorId>HLME</VendorId>
+    <VendorDescription>MEP radial pipe placeholder routing</VendorDescription>
+  </AddIn>
+</RevitAddIns>

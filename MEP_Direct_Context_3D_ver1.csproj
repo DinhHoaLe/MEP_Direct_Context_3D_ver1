@@ -1,0 +1,22 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
+    <Platform Condition="'$(Platform)'==''">AnyCPU</Platform>
+    <ProjectGuid>257ba258-706d-41e1-ae40-20eb7f31bf07</ProjectGuid>
+    <OutputType>Library</OutputType><TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <RootNamespace>MEP_Radial_Routing_ver1</RootNamespace><AssemblyName>MEP_Radial_Routing_ver1</AssemblyName>
+    <PlatformTarget>x64</PlatformTarget><LangVersion>7.3</LangVersion><Deterministic>true</Deterministic>
+    <OutputPath>bin\$(Configuration)\</OutputPath><DebugSymbols>true</DebugSymbols><DebugType>portable</DebugType>
+    <RevitApiPath Condition="'$(RevitApiPath)'==''">C:\Program Files\Autodesk\Revit 2023</RevitApiPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System"/><Reference Include="System.Core"/><Reference Include="System.Xaml"/>
+    <Reference Include="WindowsBase"/><Reference Include="PresentationCore"/><Reference Include="PresentationFramework"/>
+    <Reference Include="RevitAPI"><HintPath>$(RevitApiPath)\RevitAPI.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="RevitAPIUI"><HintPath>$(RevitApiPath)\RevitAPIUI.dll</HintPath><Private>False</Private></Reference>
+    <Compile Include="Core\*.cs"/><Compile Include="Revit\*.cs"/><Compile Include="UI\*.cs"/>
+    <Compile Include="Properties\AssemblyInfo.cs"/>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
