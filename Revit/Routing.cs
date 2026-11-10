@@ -198,7 +198,7 @@ namespace MEP_Radial_Routing_ver1.Revit
                 settings.SystemId=systemOptions[(index+1)%systemOptions.Count].Id;
                 UpdateSystemLabel();radial.Menu.InvalidateVisual();
             }
-            else if(key==27) {if(menuOpen)CloseMenu();else if(session.State==RoutingState.ChoosingDirection)Request(a=>Dispose());else {session.Escape();dirty=true;}}
+            else if(key==27) {if(menuOpen)CloseMenu();else Request(a=>Dispose());}
             else if(key==8) {CloseMenu();session.Escape();dirty=true;}
             else if(key==13 && !menuOpen) {if(session.State==RoutingState.ChoosingDirection)Finish();else {OnMove(x,y);Commit();}}
         }

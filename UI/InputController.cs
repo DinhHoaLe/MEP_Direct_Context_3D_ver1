@@ -78,7 +78,9 @@ namespace MEP_Radial_Routing_ver1.UI
                     if(!down && ctrl) { ctrl=false;QueueKey(-17,p);return (IntPtr)1; }
                     if(ctrl)return (IntPtr)1;
                 }
-                if(CaptureRoutingKeys && down && ((key==9 && ctrl) || ((key==27 || key==8 || key==13) && (ctrl || InViewport(p.X,p.Y))))) { QueueKey(key,p);return (IntPtr)1; }
+                // Escape must remain an exit even when the cursor leaves the viewport.
+                // The passive native-Pipe observer never captures routing keys.
+                if(CaptureRoutingKeys && down && (key==27 || (key==9 && ctrl) || ((key==8 || key==13) && (ctrl || InViewport(p.X,p.Y))))) { QueueKey(key,p);return (IntPtr)1; }
             }
             return CallNextHookEx(IntPtr.Zero,n,w,l);
         }

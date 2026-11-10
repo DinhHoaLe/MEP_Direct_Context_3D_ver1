@@ -54,6 +54,17 @@ static class InputControllerTests
             Check(observed==1&&keys==8,"Escape is observed without becoming a radial routing action");
             input.ObserveKey=null;foreground=false;Check(!input.TryEndNativeCommand(),"Never post native cancellation when Revit is not foreground");
             foreground=true;Check(!input.TryEndNativeCommand(),"Never post cancellation to an invalid window handle");
+            input.InViewport=(x,y)=>false;input.CaptureRoutingKeys=true;
+            int exits=0;input.Key=(key,x,y)=>{if(key==27)exits++;};
+            Check(Invoke(input,"Keyboard",0x100,new KeyData {Key=27})==(IntPtr)1,"Active routing captures Escape outside viewport");
+            Check(exits==0,"Escape exit is deferred outside hook");Drain(input);
+            Check(exits==1,"Escape outside viewport reaches routing exit");
+            input.CaptureRoutingKeys=false;
+            Invoke(input,"Keyboard",0x100,new KeyData {Key=27});Drain(input);
+            Check(exits==1,"Passive native observer does not capture Escape outside viewport");
+            input.CaptureRoutingKeys=true;foreground=false;
+            Invoke(input,"Keyboard",0x100,new KeyData {Key=27});Drain(input);
+            Check(exits==1,"Escape in another app never exits routing");
         }
         Console.WriteLine("PASS: "+count+" input assertions (deferred callbacks, paired clicks, coalescing, focus)");
     }

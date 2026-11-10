@@ -9,7 +9,7 @@ Add-in C# / WPF cho Revit 2023, .NET Framework 4.8, x64. Không có bảng setup
 3. Giữ Ctrl: chọn **R** trên vòng tròn để xoay quanh trục nguồn. Wheel chọn **T** (góc nghiêng khỏi trục): 0 / 15 / 22.5 / 30 / 45 / 60 / 90°. Mặc định T=45°. Có thể rê ra ngoài vòng tròn; thả Ctrl để khóa vector 3D. Vùng tâm/Esc hủy lượt chọn và khôi phục góc nghiêng trước.
 4. Di chuyển chuột để kéo chiều dài. Click hoặc Enter tạo ngay đoạn Pipe và kết nối với nguồn, gồm fitting nếu Revit cần và có cấu hình phù hợp. Không cần thao tác Finish ẩn để ghi model.
 5. Sau khi thành công, đầu hở của Pipe mới trở thành nguồn tiếp theo. Tiếp tục Ctrl/chọn hướng/kéo/click.
-6. Enter giữa các đoạn hoặc Esc khi không còn preview kết thúc phiên. Esc/Backspace khi đang preview chỉ bỏ preview. Các Pipe đã tạo vẫn ở model. Kết thúc phiên rồi dùng Undo gốc của Revit để hoàn tác đoạn đã tạo.
+6. Enter giữa các đoạn kết thúc phiên. Esc khi bánh xe đang đóng kết thúc phiên ngay, kể cả đang preview hoặc chuột nằm ngoài viewport trong Revit. Esc khi bánh xe mở chỉ hủy lượt chọn góc; nhấn Esc lần nữa để kết thúc phiên. Backspace khi đang preview chỉ bỏ preview. Các Pipe đã tạo vẫn ở model. Kết thúc phiên rồi dùng Undo gốc của Revit để hoàn tác đoạn đã tạo.
 
 Chỉ có radial overlay không lấy focus. Không có SetForegroundWindow, SendInput hoặc SetCursorPos. Không điều khiển chuột/bàn phím từ xa. Hook chỉ hoạt động khi Revit foreground và đúng view nguồn; input bị bỏ khi mất focus/đổi view. Bộ theo dõi connector ngoài phiên không chặn Enter/Esc/Backspace.
 
@@ -88,3 +88,8 @@ Bản 1.2.2 sửa lỗi tuyến mới trong template có nhiều System Type. Co
 Checklist hai way: PI không Ctrl phải giữ trọn luồng Revit; sau một đoạn native, Ctrl chuyển từ đúng đầu hở; Ctrl nhanh vẫn giữ tâm/menu và điểm thả; Ctrl không có nguồn cần chọn điểm đầu; ngoài lệnh Pipe, chọn connector + Ctrl phải khởi chạy được; Esc/Alt-Tab/đổi view không để lại handoff chờ vô hạn; đổi hướng radial phải có Elbow thật. Chưa kiểm thử handoff bằng thông điệp cửa sổ trong Revit vì kết nối Revit client chưa hoạt động.
 
 Checklist Axis 3D: lấy cả hai đầu cùng Pipe, U phải ngược nhau và hướng ra ngoài; ống xiên không kéo về trục model; wheel đổi T chứ không đổi plane; R=0/T=0 đi thẳng; T=90 tạo góc vuông; tạo liên tiếp hai đoạn xiên rồi kiểm tra U theo đoạn mới; xoay camera sau khóa không đổi vector; Cancel menu khôi phục T; PI không Ctrl vẫn native; mỗi chỗ đổi hướng phải có Elbow thật. Chưa kiểm thử tương tác 1.4 trong Revit.
+
+## Sửa Esc — 1.4.1 (10/11/2026)
+
+Esc thoát routing khi bánh xe đóng, không phụ thuộc vị trí chuột trong Revit. Esc trong bánh xe hủy lựa chọn; Backspace bỏ preview. Các Pipe đã tạo được giữ nguyên. Bộ theo dõi Pipe native vẫn không chặn Esc. Thêm 5 kiểm tra input hồi quy; chưa kiểm thử bản sửa trực tiếp trong Revit.
+
